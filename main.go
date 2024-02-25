@@ -50,15 +50,11 @@ func printSudoku(Sudoku [][]int) {
 	fmt.Printf("\n")
 }
 
-//-------------------------------------------------------------------------------------
-
-func canPut(sudoku [][]int, col int, row int, value int) bool {
-	return !ifVertical(sudoku, col, row, value) &&
-		!ifHorizontal(sudoku, col, row, value) &&
-		!ifSquare(sudoku, col, row, value)
+func ifPut(sudoku [][]int, col int, row int, value int) bool {
+	return !checkVertical(sudoku, col, row, value) && !checkHorizontal(sudoku, col, row, value) && !checkSquare3_3(sudoku, col, row, value)
 }
 
-func ifVertical(sudoku [][]int, col int, row int, value int) bool {
+func checkVertical(sudoku [][]int, col int, row int, value int) bool {
 	for i := 0; i < 9; i++ {
 		if sudoku[i][col] == value {
 			return true
@@ -67,7 +63,7 @@ func ifVertical(sudoku [][]int, col int, row int, value int) bool {
 	return false
 }
 
-func ifHorizontal(sudoku [][]int, col int, row int, value int) bool {
+func checkHorizontal(sudoku [][]int, col int, row int, value int) bool {
 	for i := range [9]int{} {
 		if sudoku[row][i] == value {
 			return true
@@ -76,11 +72,11 @@ func ifHorizontal(sudoku [][]int, col int, row int, value int) bool {
 	return false
 }
 
-func ifSquare(sudoku [][]int, col int, row int, value int) bool {
+func checkSquare3_3(sudoku [][]int, col int, row int, value int) bool {
 	scol, srow := int(col/3)*3, int(row/3)*3
-	for drow := range [3]int{} {
-		for dcol := range [3]int{} {
-			if sudoku[srow+drow][scol+dcol] == value {
+	for drow := 0; drow < 3; drow++ {
+		for dcol := 0; dcol < 3; dcol++ {
+			if sudoku[srow + drow][scol + dcol] == value {
 				return true
 			}
 		}
@@ -89,25 +85,27 @@ func ifSquare(sudoku [][]int, col int, row int, value int) bool {
 }
 
 func nextCoordinates(col int, row int) (int, int) {
-	nextCol, nextRow := (col+1)%9, row
+	nextCol, nextRow := (col + 1) % 9, row
 	if nextCol == 0 {
 		nextRow = row + 1
 	}
 	return nextCol, nextRow
 }
 
-func solve(sudoku [][]int, col int, row int) bool {
+func solver(sudoku [][]int, col int, row int) bool {
 	if row == 9 {
 		return true
 	}
 	if sudoku[row][col] != 0 {
-		return solve(nextCoordinates(col, row))
+		tmpx, tmpy := nextCoordinates(col, row)
+		return solver(sudoku, tmpx, tmpy)
 	} else {
-		for i := range [9]int{} {
+		for i := 0; i < 9; i++ {
 			v := i + 1
-			if canPut(col, row, v) {
+			if ifPut(sudoku, col, row, v) {
 				sudoku[row][col] = v
-				if solve(nextCoordinates(col, row)) {
+				tmpx, tmpy := nextCoordinates(col, row)
+				if solver(sudoku, tmpx, tmpy) {
 					return true
 				}
 				sudoku[row][col] = 0
@@ -121,7 +119,11 @@ func main() {
 	args := os.Args[1:]
 	Sudoku := makeCopy(args)
 	// Sudoku[8][1] = 5
-	if len(args) == 9 {
+	if solver(Sudoku, 0, 0) {
+		fmt.Println("OK")
 		printSudoku(Sudoku)
+	} else {
+			
+		fmt.Println("KO")
 	}
 }
